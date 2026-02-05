@@ -3,22 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { text-align: center; font-family: sans-serif; background: transparent; overflow: hidden; }
-        #canvas { transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); margin-top: 20px; }
-        .pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid red; position: absolute; left: 50%; transform: translateX(-50%); z-index: 5; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 5px; margin-top: 10px; }
+        /* Общий фон страницы делаем прозрачным */
+        body { 
+            text-align: center; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: transparent; 
+            margin: 0; 
+            padding: 20px; 
+            overflow: hidden; 
+            color: #333;
+        }
+
+        .container { 
+            position: relative; 
+            display: inline-block; 
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+        }
+
+        /* Указатель (стрелочка) */
+        .pointer { 
+            position: absolute; 
+            top: -5px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 0; 
+            height: 0; 
+            border-left: 20px solid transparent; 
+            border-right: 20px solid transparent; 
+            border-top: 35px solid #e74c3c; 
+            z-index: 10;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+        }
+
+        #canvas { 
+            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
+            border-radius: 50%;
+            border: 8px solid #fff;
+            background-color: #fff;
+        }
+
+        /* Кнопка */
+        button { 
+            margin-top: 25px;
+            padding: 12px 35px; 
+            font-size: 18px; 
+            font-weight: bold;
+            cursor: pointer; 
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #fff; 
+            border: none; 
+            border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(110, 142, 251, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(110, 142, 251, 0.6);
+        }
+
+        button:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        #res {
+            margin-top: 15px;
+            font-size: 22px;
+            min-height: 30px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
     </style>
 </head>
 <body>
-    <div class="pointer"></div>
-    <canvas id="canvas" width="350" height="350"></canvas><br>
-    <button id="btn" onclick="spin()">Крутить!</button>
-    <h3 id="res"></h3>
+    <div class="container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="360" height="360"></canvas>
+    </div>
+    <br>
+    <button id="btn" onclick="spin()">ИСПЫТАТЬ УДАЧУ</button>
+    <div id="res"></div>
 
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        const colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3"];
+        // Красивая палитра мягких цветов
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#858796", "#f8f9fc"];
 
         async function init() {
             const r = await fetch('/spin', {method:'POST'});
@@ -27,34 +99,65 @@
         }
 
         function draw(labels) {
+            const centerX = 180;
+            const centerY = 180;
+            const radius = 175;
             const arc = (Math.PI*2) / labels.length;
+
+            ctx.clearRect(0,0,360,360);
+            
             labels.forEach((text, i) => {
+                const angle = i * arc;
+                // Сектор
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
-                ctx.moveTo(175, 175);
-                ctx.arc(175, 175, 170, i*arc, (i+1)*arc);
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
+                ctx.stroke();
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+
+                // Текст
                 ctx.save();
-                ctx.translate(175, 175);
-                ctx.rotate(i*arc + arc/2);
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc/2);
                 ctx.fillStyle = "#fff";
-                ctx.fillText(text, 70, 5);
+                ctx.font = "bold 14px sans-serif";
+                ctx.textAlign = "right";
+                // Обрезаем текст если он слишком длинный
+                const displayText = text.length > 12 ? text.substring(0, 10) + ".." : text;
+                ctx.fillText(displayText, radius - 20, 5);
                 ctx.restore();
             });
+
+            // Центральный кружок для красоты
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, Math.PI*2);
+            ctx.fillStyle = "#fff";
+            ctx.fill();
         }
 
         async function spin() {
-            document.getElementById('btn').disabled = true;
+            const btn = document.getElementById('btn');
+            const resText = document.getElementById('res');
+            btn.disabled = true;
+            resText.innerText = "Удача улыбается...";
+
             const r = await fetch('/spin', {method:'POST'});
             const d = await r.json();
-            const arc = 360 / d.total_segments;
-            const rotateTo = 1800 + (360 - (d.index * arc) - (arc/2));
-            currentRotation += rotateTo;
+            
+            const arcDegree = 360 / d.total_segments;
+            // Рассчитываем финальный угол (минимум 5 полных оборотов + сектор)
+            const extraSpins = 1800; 
+            const targetAngle = extraSpins + (360 - (d.index * arcDegree) - (arcDegree/2));
+            
+            currentRotation += targetAngle;
             document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
+
             setTimeout(() => {
-                document.getElementById('res').innerText = "Приз: " + d.prize;
-                document.getElementById('btn').disabled = false;
-            }, 4000);
+                resText.innerText = "✨ " + d.prize + " ✨";
+                btn.disabled = false;
+            }, 5200);
         }
         init();
     </script>
