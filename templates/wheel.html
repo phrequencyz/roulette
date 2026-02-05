@@ -3,69 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { 
-            text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: transparent; 
-            margin: 0; 
-            padding: 20px; 
-            overflow: hidden; 
-            color: #333;
-        }
-
-        .container { 
-            position: relative; 
-            display: inline-block; 
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
-        }
-
-        /* Стрелка строго сверху */
-        .pointer { 
-            position: absolute; 
-            top: -5px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 0; 
-            height: 0; 
-            border-left: 20px solid transparent; 
-            border-right: 20px solid transparent; 
-            border-top: 35px solid #e74c3c; 
-            z-index: 10;
-        }
-
-        #canvas { 
-            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
-            border-radius: 50%;
-            border: 8px solid #fff;
-            background-color: #fff;
-            /* Начальный поворот, чтобы первый сегмент был сверху */
-            transform: rotate(0deg); 
-        }
-
-        button { 
-            margin-top: 25px;
-            padding: 12px 35px; 
-            font-size: 18px; 
-            font-weight: bold;
-            cursor: pointer; 
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: #fff; 
-            border: none; 
-            border-radius: 50px; 
-            box-shadow: 0 4px 15px rgba(110, 142, 251, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        button:hover { transform: translateY(-2px); }
+        body { text-align: center; font-family: 'Segoe UI', sans-serif; background: transparent; padding: 20px; color: #333; }
+        .container { position: relative; display: inline-block; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); }
+        .pointer { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 35px solid #e74c3c; z-index: 10; }
+        #canvas { transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); border-radius: 50%; border: 8px solid #fff; background-color: #fff; }
+        
+        .controls { margin-top: 25px; }
+        input { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #6e8efb; outline: none; text-align: center; width: 200px; }
+        button { padding: 12px 25px; font-size: 16px; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #6e8efb, #a777e3); color: #fff; border: none; border-radius: 25px; margin-left: 10px; transition: 0.3s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-
-        #res {
-            margin-top: 15px;
-            font-size: 20px;
-            min-height: 30px;
-            font-weight: 600;
-            color: #2c3e50;
-        }
+        #res { margin-top: 15px; font-size: 20px; font-weight: 600; color: #2c3e50; min-height: 30px; }
     </style>
 </head>
 <body>
@@ -73,8 +20,11 @@
         <div class="pointer"></div>
         <canvas id="canvas" width="360" height="360"></canvas>
     </div>
-    <br>
-    <button id="btn" onclick="spin()">ИСПЫТАТЬ УДАЧУ</button>
+    
+    <div class="controls">
+        <input type="text" id="promoCode" placeholder="Введите код">
+        <button id="btn" onclick="spin()">КРУТИТЬ</button>
+    </div>
     <div id="res"></div>
 
     <script>
@@ -84,85 +34,79 @@
 
         async function init() {
             try {
-                const r = await fetch('/spin', {method:'POST'});
+                // Загружаем только визуальную часть
+                const r = await fetch('/spin', {
+                    method:'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code: 'VIEW_ONLY'}) // Сервер просто отдаст список имен при ошибке кода
+                });
                 const d = await r.json();
-                if (d.error) document.getElementById('res').innerHTML = "<span style='color: #e74c3c;'>⚠️ Ошибка JSON</span>";
-                draw(d.all_names);
-            } catch (e) { console.error(e); }
+                draw(d.all_names || ["Загрузка..."]);
+            } catch (e) { console.error("Ошибка инициализации"); }
         }
 
         function draw(labels) {
-            const centerX = 180;
-            const centerY = 180;
-            const radius = 175;
+            const centerX = 180, centerY = 180, radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-
             ctx.clearRect(0, 0, 360, 360);
-            
             labels.forEach((text, i) => {
-                // Сдвигаем угол на -90 градусов (Math.PI/2), чтобы первый элемент был сверху
                 const angle = i * arc - Math.PI / 2;
-                
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
-                
-                ctx.save();
                 ctx.strokeStyle = "rgba(255,255,255,0.4)";
-                ctx.lineWidth = 1;
                 ctx.stroke();
-                ctx.restore();
-
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 12px sans-serif"; 
+                ctx.font = "bold 12px sans-serif";
                 ctx.textAlign = "right";
-                const displayText = text.length > 12 ? text.substring(0, 10) + ".." : text;
-                ctx.fillText(displayText, radius - 20, 5);
+                ctx.fillText(text.length > 12 ? text.substring(0, 10) + ".." : text, radius - 20, 5);
                 ctx.restore();
             });
-
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
         }
 
         async function spin() {
+            const codeInput = document.getElementById('promoCode');
             const btn = document.getElementById('btn');
             const resText = document.getElementById('res');
+            
+            if (!codeInput.value) return alert("Введите код!");
+
             btn.disabled = true;
-            resText.innerText = "Колесо вращается...";
+            resText.innerText = "Проверка кода...";
 
             try {
-                const r = await fetch('/spin', {method:'POST'});
-                const d = await r.json();
-                
-                const arcDegree = 360 / d.total_segments;
-                const extraSpins = 1800; // 5 полных кругов
-                
-                /* ЛОГИКА РАСЧЕТА:
-                   1. Нам нужно, чтобы индекс d.index оказался наверху.
-                   2. В CSS rotate идет по часовой стрелке.
-                   3. Вычитаем из 360 (полный круг) положение нужного сектора.
-                */
-                const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
-                const rotationNeeded = 360 - segmentCenter;
-                
-                // Добавляем к текущему углу, чтобы вращение всегда шло вперед
-                currentRotation += extraSpins + (rotationNeeded - (currentRotation % 360));
-                if (currentRotation < extraSpins) currentRotation += extraSpins;
+                const response = await fetch('/spin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code: codeInput.value })
+                });
 
+                const data = await response.json();
+
+                if (response.status !== 200) {
+                    resText.innerText = data.error_msg;
+                    btn.disabled = false;
+                    return;
+                }
+
+                resText.innerText = "Код принят! Вращаем...";
+                const arcDegree = 360 / data.total_segments;
+                const rotationNeeded = 360 - ((data.index * arcDegree) + (arcDegree / 2));
+                currentRotation += 1800 + (rotationNeeded - (currentRotation % 360));
+                
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerText = "✨ " + d.prize + " ✨";
+                    resText.innerText = "✨ " + data.prize + " ✨";
                     btn.disabled = false;
+                    codeInput.value = "";
                 }, 5200);
+
             } catch (e) {
                 resText.innerText = "Ошибка сервера";
                 btn.disabled = false;
