@@ -3,112 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Roulette</title>
+    <title>Рулетка</title>
     <style>
-        :root {
-            --primary: #6e8efb;
-            --secondary: #a777e3;
-            --success: #27ae60;
-            --bg: #f0f2f5;
-        }
-
         body { 
             text-align: center; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg); 
-            margin: 0; padding: 20px;
+            font-family: 'Segoe UI', sans-serif; 
+            background: #f4f7f6; 
+            margin: 0; padding: 20px; 
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh;
         }
 
-        .container { 
-            position: relative; 
-            display: inline-block; 
-            margin-top: 20px;
-            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.2));
-        }
-
+        .container { position: relative; display: inline-block; margin-top: 20px; }
+        
         .pointer { 
-            position: absolute; top: -15px; left: 50%; 
+            position: absolute; top: -10px; left: 50%; 
             transform: translateX(-50%); 
             width: 0; height: 0; 
             border-left: 20px solid transparent; 
             border-right: 20px solid transparent; 
-            border-top: 40px solid #ff4757; 
+            border-top: 35px solid #e74c3c; 
             z-index: 10;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
         }
 
         #canvas { 
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
-            border-radius: 50%; 
-            border: 10px solid #fff; 
-            background-color: #fff;
+            border-radius: 50%; border: 8px solid #fff; background-color: #fff;
         }
 
-        /* КРАСИВАЯ ГРУППА ВВОДА */
         .controls {
-            display: flex; 
-            justify-content: center; 
-            align-items: stretch;
-            margin-top: 40px; 
-            width: 100%; 
-            max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border-radius: 15px;
-            overflow: hidden;
+            display: flex; justify-content: center; align-items: stretch;
+            margin-top: 30px; width: 100%; max-width: 450px;
         }
 
         input {
-            flex: 1; 
-            padding: 0 20px; 
-            height: 60px;
-            font-size: 18px; 
-            border: 2px solid #fff; 
-            outline: none;
-            background: #fff;
-            transition: all 0.3s;
-        }
-
-        input:focus {
-            background: #fafafa;
+            flex: 1; padding: 0 15px; height: 50px;
+            font-size: 16px; border: 2px solid #ddd; border-right: none;
+            border-radius: 10px 0 0 10px; outline: none;
         }
 
         button { 
-            height: 60px; 
-            padding: 0 30px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
-            color: #fff; 
-            border: none; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            height: 50px; padding: 0 25px; 
+            font-size: 16px; font-weight: bold; cursor: pointer; 
+            background: #27ae60; color: #fff; 
+            border: none; border-radius: 0 10px 10px 0;
             white-space: nowrap;
         }
 
-        button:hover {
-            filter: brightness(1.1);
-            padding: 0 35px;
-        }
-
-        button:disabled { 
-            background: #bdc3c7; 
-            cursor: not-allowed; 
-        }
+        button:disabled { background: #ccc; }
 
         #res {
-            margin-top: 30px;
-            font-size: 24px;
-            font-weight: 700;
+            margin-top: 25px;
+            font-size: 22px;
+            font-weight: 600;
             color: #2c3e50;
             width: 90%;
-            white-space: nowrap; 
+            white-space: nowrap; /* В ОДНУ СТРОКУ */
             overflow: hidden;
             text-overflow: ellipsis;
-            min-height: 40px;
         }
     </style>
 </head>
@@ -116,11 +67,11 @@
 
     <div class="container">
         <div class="pointer"></div>
-        <canvas id="canvas" width="380" height="380"></canvas>
+        <canvas id="canvas" width="360" height="360"></canvas>
     </div>
 
     <div class="controls">
-        <input type="text" id="promo-code" placeholder="ВВЕДИТЕ ПРОМОКОД">
+        <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
         <button id="btn" onclick="spin()">КРУТИТЬ</button>
     </div>
 
@@ -129,13 +80,12 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#5a5af3", "#ff6b6b"];
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997"];
 
         function draw(labels) {
-            const centerX = 190, centerY = 190, radius = 180;
+            const centerX = 180, centerY = 180, radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-            ctx.clearRect(0, 0, 380, 380);
-            
+            ctx.clearRect(0, 0, 360, 360);
             labels.forEach((text, i) => {
                 const angle = i * arc - Math.PI / 2;
                 ctx.beginPath();
@@ -143,61 +93,34 @@
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
-                
-                // Линии разделения
-                ctx.save();
-                ctx.strokeStyle = "rgba(255,255,255,0.2)";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.restore();
-
-                // Текст
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 13px Segoe UI"; 
-                ctx.textAlign = "right";
-                ctx.fillText(text.substring(0, 15), radius - 25, 5);
+                ctx.font = "bold 12px sans-serif"; ctx.textAlign = "right";
+                ctx.fillText(text.substring(0, 14), radius - 20, 5);
                 ctx.restore();
             });
-
-            // Центральный круг
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
         }
 
+        // Загрузка призов ПРИ СТАРТЕ
         async function init() {
             try {
                 const r = await fetch('/get_prizes_list');
                 const d = await r.json();
-                if (d.names && d.names.length > 0) {
-                    draw(d.names);
-                } else {
-                    throw new Error("Empty list");
-                }
+                if (d.names) draw(d.names);
             } catch (e) {
-                console.error("Data error:", e);
-                draw(["Загрузка...", "Подождите", "Загрузка...", "Подождите", "Загрузка...", "Подождите"]);
-                // Пробуем перезагрузить через 3 секунды (на случай если Render еще спит)
-                setTimeout(init, 3000);
+                draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
             }
         }
 
         async function spin() {
             const btn = document.getElementById('btn'), resText = document.getElementById('res');
-            const codeInput = document.getElementById('promo-code');
-            const code = codeInput.value.trim();
-
-            if (!code) {
-                resText.innerText = "⚠️ Введите код";
-                return;
-            }
+            const code = document.getElementById('promo-code').value.trim();
+            if (!code) { alert("Введите код!"); return; }
 
             btn.disabled = true;
-            resText.innerText = "⏳ Проверка кода...";
+            resText.innerText = "⏳ Проверка...";
 
             try {
                 const r = await fetch('/spin', {
@@ -214,20 +137,18 @@
                 }
 
                 draw(d.all_names);
-                resText.innerText = "🎰 Удача улыбается вам...";
-                
                 const arcDegree = 360 / d.total_segments;
                 const targetAngle = 360 - (d.index * arcDegree + arcDegree / 2);
                 currentRotation += 1800 + ((targetAngle - (currentRotation % 360) + 360) % 360);
-                
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerHTML = "✨ ВЫИГРЫШ: <span style='color: #ff4757;'>" + d.prize + "</span> ✨";
+                    // ТУТ ВЫВОД В ОДНУ СТРОКУ
+                    resText.innerHTML = "✨ ВЫИГРЫШ: <span style='color: #e74a3b;'>" + d.prize + "</span> ✨";
                     btn.disabled = false;
                 }, 5200);
             } catch (e) {
-                resText.innerText = "❗ Ошибка связи с сервером";
+                resText.innerText = "❗ Ошибка соединения";
                 btn.disabled = false;
             }
         }
