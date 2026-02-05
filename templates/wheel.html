@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Удачливая Рулетка</title>
     <style>
         body { 
             text-align: center; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: transparent; 
+            background: #f4f7f6; 
             margin: 0; 
             padding: 20px; 
-            overflow: hidden; 
             color: #333;
         }
 
@@ -17,6 +18,7 @@
             position: relative; 
             display: inline-block; 
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+            margin-top: 20px;
         }
 
         /* Стрелка строго сверху */
@@ -38,12 +40,31 @@
             border-radius: 50%;
             border: 8px solid #fff;
             background-color: #fff;
-            /* Начальный поворот, чтобы первый сегмент был сверху */
             transform: rotate(0deg); 
         }
 
-        button { 
+        /* Блок ввода кода */
+        .input-group {
             margin-top: 25px;
+        }
+
+        input {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            outline: none;
+            transition: border-color 0.3s;
+            width: 200px;
+            text-align: center;
+        }
+
+        input:focus {
+            border-color: #6e8efb;
+        }
+
+        button { 
+            margin-top: 15px;
             padding: 12px 35px; 
             font-size: 18px; 
             font-weight: bold;
@@ -54,14 +75,17 @@
             border-radius: 50px; 
             box-shadow: 0 4px 15px rgba(110, 142, 251, 0.4);
             transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         button:hover { transform: translateY(-2px); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
         #res {
-            margin-top: 15px;
-            font-size: 20px;
+            margin-top: 20px;
+            font-size: 22px;
             min-height: 30px;
             font-weight: 600;
             color: #2c3e50;
@@ -69,12 +93,17 @@
     </style>
 </head>
 <body>
+
     <div class="container">
         <div class="pointer"></div>
         <canvas id="canvas" width="360" height="360"></canvas>
     </div>
-    <br>
-    <button id="btn" onclick="spin()">ИСПЫТАТЬ УДАЧУ</button>
+
+    <div class="input-group">
+        <input type="text" id="promo-code" placeholder="Введите код">
+        <button id="btn" onclick="spin()">ИСПЫТАТЬ УДАЧУ</button>
+    </div>
+
     <div id="res"></div>
 
     <script>
@@ -82,12 +111,14 @@
         const ctx = document.getElementById('canvas').getContext('2d');
         const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2", "#198754", "#0dcaf0"];
 
+        // Первичная отрисовка колеса (загружаем названия один раз)
         async function init() {
             try {
-                const r = await fetch('/spin', {method:'POST'});
-                const d = await r.json();
-                if (d.error) document.getElementById('res').innerHTML = "<span style='color: #e74c3c;'>⚠️ Ошибка JSON</span>";
-                draw(d.all_names);
+                // Мы можем сделать пустой запрос или просто получить список имен
+                // Для простоты, здесь можно либо захардкодить заглушки, 
+                // либо сервер при первом GET / может передавать список всех имен.
+                // Пока просто отрисуем пустое или дефолтное колесо.
+                draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
             } catch (e) { console.error(e); }
         }
 
@@ -100,7 +131,6 @@
             ctx.clearRect(0, 0, 360, 360);
             
             labels.forEach((text, i) => {
-                // Сдвигаем угол на -90 градусов (Math.PI/2), чтобы первый элемент был сверху
                 const angle = i * arc - Math.PI / 2;
                 
                 ctx.beginPath();
@@ -135,41 +165,62 @@
         async function spin() {
             const btn = document.getElementById('btn');
             const resText = document.getElementById('res');
+            const codeInput = document.getElementById('promo-code');
+            const code = codeInput.value.trim();
+
+            if (!code) {
+                alert("Пожалуйста, введите код!");
+                return;
+            }
+
             btn.disabled = true;
-            resText.innerText = "Колесо вращается...";
+            resText.innerText = "Проверка кода...";
 
             try {
-                const r = await fetch('/spin', {method:'POST'});
+                const r = await fetch('/spin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+
                 const d = await r.json();
+
+                if (!r.ok) {
+                    resText.innerText = d.error || "Ошибка";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Перерисовываем колесо актуальными названиями из JSON перед вращением
+                draw(d.all_names);
+
+                resText.innerText = "Колесо вращается...";
                 
                 const arcDegree = 360 / d.total_segments;
                 const extraSpins = 1800; // 5 полных кругов
                 
-                /* ЛОГИКА РАСЧЕТА:
-                   1. Нам нужно, чтобы индекс d.index оказался наверху.
-                   2. В CSS rotate идет по часовой стрелке.
-                   3. Вычитаем из 360 (полный круг) положение нужного сектора.
-                */
+                // Расчет угла для попадания в нужный сегмент (360 - середина сегмента)
                 const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
-                const rotationNeeded = 360 - segmentCenter;
-                
-                // Добавляем к текущему углу, чтобы вращение всегда шло вперед
-                currentRotation += extraSpins + (rotationNeeded - (currentRotation % 360));
-                if (currentRotation < extraSpins) currentRotation += extraSpins;
+                const targetAngle = 360 - segmentCenter;
+
+                // Математически корректный доворот всегда вперед
+                currentRotation += extraSpins + ((targetAngle - (currentRotation % 360) + 360) % 360);
 
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerText = "✨ " + d.prize + " ✨";
+                    resText.innerHTML = "✨ Вы выиграли: <br><span style='color: #e74c3c; font-size: 28px;'>" + d.prize + "</span> ✨";
                     btn.disabled = false;
                 }, 5200);
+
             } catch (e) {
+                console.error(e);
                 resText.innerText = "Ошибка сервера";
                 btn.disabled = false;
             }
         }
+
         init();
     </script>
 </body>
 </html>
-
