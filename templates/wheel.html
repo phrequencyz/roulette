@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Lucky Wheel</title>
     <style>
         body { 
             text-align: center; 
@@ -88,7 +87,6 @@
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
         
-        // Обновленная палитра из 12 цветов
         const colors = [
             "#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", 
             "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2",
@@ -106,7 +104,7 @@
                 
                 draw(d.all_names);
             } catch (e) {
-                document.getElementById('res').innerText = "Ошибка соединения с сервером";
+                document.getElementById('res').innerText = "Ошибка загрузки данных";
             }
         }
 
@@ -120,25 +118,35 @@
             
             labels.forEach((text, i) => {
                 const angle = i * arc;
+                
+                // Сектор
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
-                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                
+                // Настройка обводки: используем белый цвет с низкой прозрачностью
+                // Это предотвращает появление черных артефактов на стыках
+                ctx.save();
+                ctx.strokeStyle = "rgba(255,255,255,0.4)";
+                ctx.lineWidth = 1;
                 ctx.stroke();
+                ctx.restore();
 
+                // Текст
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc/2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 12px sans-serif"; // Чуть меньше шрифт для 20 сегментов
+                ctx.font = "bold 12px sans-serif"; 
                 ctx.textAlign = "right";
                 const displayText = text.length > 12 ? text.substring(0, 10) + ".." : text;
                 ctx.fillText(displayText, radius - 20, 5);
                 ctx.restore();
             });
 
+            // Центр
             ctx.beginPath();
             ctx.arc(centerX, centerY, 15, 0, Math.PI*2);
             ctx.fillStyle = "#fff";
@@ -149,7 +157,7 @@
             const btn = document.getElementById('btn');
             const resText = document.getElementById('res');
             btn.disabled = true;
-            resText.innerText = "Удача улыбается...";
+            resText.innerText = "Колесо вращается...";
 
             try {
                 const r = await fetch('/spin', {method:'POST'});
@@ -167,7 +175,7 @@
                     btn.disabled = false;
                 }, 5200);
             } catch (e) {
-                resText.innerText = "Ошибка запроса";
+                resText.innerText = "Ошибка сервера";
                 btn.disabled = false;
             }
         }
