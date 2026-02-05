@@ -5,8 +5,7 @@ from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
-# ПРОВЕРЬ ЭТУ ССЫЛКУ! Она должна начинаться с raw.githubusercontent.com
-JSON_URL = "ТВОЯ_RAW_ССЫЛКА_ЗДЕСЬ"
+JSON_URL = "https://raw.githubusercontent.com/phrequencyz/roulette/refs/heads/main/prizes.json"
 
 def get_prizes():
     try:
@@ -37,3 +36,4 @@ def spin():
         "total_segments": len(names),
         "all_names": names
     })
+
