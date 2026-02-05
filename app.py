@@ -21,7 +21,7 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 # Название твоей таблицы (в точности как в Google Sheets)
-SHEET_NAME = "Название_Твоей_Таблицы" 
+SHEET_NAME = "codes_roulette" 
 JSON_URL = "https://raw.githubusercontent.com/phrequencyz/roulette/refs/heads/main/prizes.json"
 
 def get_prizes():
@@ -86,3 +86,4 @@ def spin():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
