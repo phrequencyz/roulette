@@ -19,6 +19,7 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
         }
 
+        /* Стрелка строго сверху */
         .pointer { 
             position: absolute; 
             top: -5px; 
@@ -30,7 +31,6 @@
             border-right: 20px solid transparent; 
             border-top: 35px solid #e74c3c; 
             z-index: 10;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
         }
 
         #canvas { 
@@ -38,6 +38,8 @@
             border-radius: 50%;
             border: 8px solid #fff;
             background-color: #fff;
+            /* Начальный поворот, чтобы первый сегмент был сверху */
+            transform: rotate(0deg); 
         }
 
         button { 
@@ -54,16 +56,8 @@
             transition: all 0.3s ease;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(110, 142, 251, 0.6);
-        }
-
-        button:disabled {
-            background: #ccc;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
 
         #res {
             margin-top: 15px;
@@ -86,58 +80,44 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        
-        const colors = [
-            "#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", 
-            "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2",
-            "#198754", "#0dcaf0"
-        ];
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2", "#198754", "#0dcaf0"];
 
         async function init() {
             try {
                 const r = await fetch('/spin', {method:'POST'});
                 const d = await r.json();
-                
-                if (d.error) {
-                    document.getElementById('res').innerHTML = "<span style='color: #e74c3c;'>⚠️ JSON недоступен, данные по умолчанию</span>";
-                }
-                
+                if (d.error) document.getElementById('res').innerHTML = "<span style='color: #e74c3c;'>⚠️ Ошибка JSON</span>";
                 draw(d.all_names);
-            } catch (e) {
-                document.getElementById('res').innerText = "Ошибка загрузки данных";
-            }
+            } catch (e) { console.error(e); }
         }
 
         function draw(labels) {
             const centerX = 180;
             const centerY = 180;
             const radius = 175;
-            const arc = (Math.PI*2) / labels.length;
+            const arc = (Math.PI * 2) / labels.length;
 
-            ctx.clearRect(0,0,360,360);
+            ctx.clearRect(0, 0, 360, 360);
             
             labels.forEach((text, i) => {
-                const angle = i * arc;
+                // Сдвигаем угол на -90 градусов (Math.PI/2), чтобы первый элемент был сверху
+                const angle = i * arc - Math.PI / 2;
                 
-                // Сектор
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
                 
-                // Настройка обводки: используем белый цвет с низкой прозрачностью
-                // Это предотвращает появление черных артефактов на стыках
                 ctx.save();
                 ctx.strokeStyle = "rgba(255,255,255,0.4)";
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.restore();
 
-                // Текст
                 ctx.save();
                 ctx.translate(centerX, centerY);
-                ctx.rotate(angle + arc/2);
+                ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 12px sans-serif"; 
                 ctx.textAlign = "right";
@@ -146,9 +126,8 @@
                 ctx.restore();
             });
 
-            // Центр
             ctx.beginPath();
-            ctx.arc(centerX, centerY, 15, 0, Math.PI*2);
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
             ctx.fillStyle = "#fff";
             ctx.fill();
         }
@@ -164,10 +143,20 @@
                 const d = await r.json();
                 
                 const arcDegree = 360 / d.total_segments;
-                const extraSpins = 1800; 
-                const targetAngle = extraSpins + (360 - (d.index * arcDegree) - (arcDegree/2));
+                const extraSpins = 1800; // 5 полных кругов
                 
-                currentRotation += targetAngle;
+                /* ЛОГИКА РАСЧЕТА:
+                   1. Нам нужно, чтобы индекс d.index оказался наверху.
+                   2. В CSS rotate идет по часовой стрелке.
+                   3. Вычитаем из 360 (полный круг) положение нужного сектора.
+                */
+                const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
+                const rotationNeeded = 360 - segmentCenter;
+                
+                // Добавляем к текущему углу, чтобы вращение всегда шло вперед
+                currentRotation += extraSpins + (rotationNeeded - (currentRotation % 360));
+                if (currentRotation < extraSpins) currentRotation += extraSpins;
+
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
