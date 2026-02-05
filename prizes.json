@@ -1,13 +1,24 @@
 [
-    {"name": "1", "chance": 5},
-    {"name": "2", "chance": 15},
-    {"name": "3", "chance": 30},
-    {"name": "4", "chance": 50}
-    {"name": "5", "chance": 50}
-    {"name": "6", "chance": 50}
-    {"name": "7", "chance": 50}
-    {"name": "8", "chance": 50}
-    {"name": "9", "chance": 50}
-    {"name": "10", "chance": 50}
+    {"name": "Один", "chance": 5},
+    {"name": "Два", "chance": 15},
+    {"name": "Три", "chance": 30},
+    {"name": "Четыре", "chance": 50}
+    {"name": "Пять", "chance": 50}
+    {"name": "Шесть", "chance": 50}
+    {"name": "Семь", "chance": 50}
+    {"name": "Восемь", "chance": 50}
+    {"name": "Девять", "chance": 50}
+    {"name": "Десять", "chance": 50}
+    {"name": "Одиннадцать", "chance": 5},
+    {"name": "Двенадцать", "chance": 15},
+    {"name": "Тринадцать", "chance": 30},
+    {"name": "Четырнадцать", "chance": 50}
+    {"name": "Пятнадцать", "chance": 50}
+    {"name": "Шестнадцать", "chance": 50}
+    {"name": "Семнадцать", "chance": 50}
+    {"name": "Восемнадцать", "chance": 50}
+    {"name": "Девятнадцать", "chance": 50}
+    {"name": "Двадцать", "chance": 50}
 
 ]
+
