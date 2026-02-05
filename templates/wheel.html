@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { text-align: center; font-family: sans-serif; background: transparent; overflow: hidden; }
+        #canvas { transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); margin-top: 20px; }
+        .pointer { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid red; position: absolute; left: 50%; transform: translateX(-50%); z-index: 5; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: #fff; border: none; border-radius: 5px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="pointer"></div>
+    <canvas id="canvas" width="350" height="350"></canvas><br>
+    <button id="btn" onclick="spin()">Крутить!</button>
+    <h3 id="res"></h3>
+
+    <script>
+        let currentRotation = 0;
+        const ctx = document.getElementById('canvas').getContext('2d');
+        const colors = ["#FF5733", "#33FF57", "#3357FF", "#F3FF33", "#FF33F3", "#33FFF3"];
+
+        async function init() {
+            const r = await fetch('/spin', {method:'POST'});
+            const d = await r.json();
+            draw(d.all_names);
+        }
+
+        function draw(labels) {
+            const arc = (Math.PI*2) / labels.length;
+            labels.forEach((text, i) => {
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(175, 175);
+                ctx.arc(175, 175, 170, i*arc, (i+1)*arc);
+                ctx.fill();
+                ctx.save();
+                ctx.translate(175, 175);
+                ctx.rotate(i*arc + arc/2);
+                ctx.fillStyle = "#fff";
+                ctx.fillText(text, 70, 5);
+                ctx.restore();
+            });
+        }
+
+        async function spin() {
+            document.getElementById('btn').disabled = true;
+            const r = await fetch('/spin', {method:'POST'});
+            const d = await r.json();
+            const arc = 360 / d.total_segments;
+            const rotateTo = 1800 + (360 - (d.index * arc) - (arc/2));
+            currentRotation += rotateTo;
+            document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(() => {
+                document.getElementById('res').innerText = "Приз: " + d.prize;
+                document.getElementById('btn').disabled = false;
+            }, 4000);
+        }
+        init();
+    </script>
+</body>
+</html>
