@@ -1,6 +1,13 @@
 [
-    {"name": "VIP на месяц", "chance": 5},
-    {"name": "1000 золота", "chance": 15},
-    {"name": "Обычный кейс", "chance": 30},
-    {"name": "Попробуй еще раз", "chance": 50}
+    {"name": "1", "chance": 5},
+    {"name": "2", "chance": 15},
+    {"name": "3", "chance": 30},
+    {"name": "4", "chance": 50}
+    {"name": "5", "chance": 50}
+    {"name": "6", "chance": 50}
+    {"name": "7", "chance": 50}
+    {"name": "8", "chance": 50}
+    {"name": "9", "chance": 50}
+    {"name": "10", "chance": 50}
+
 ]
