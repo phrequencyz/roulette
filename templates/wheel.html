@@ -3,35 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Удачливая Рулетка</title>
+    <title>Рулетка</title>
     <style>
         body { 
             text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             background: #f4f7f6; 
-            margin: 0; 
-            padding: 20px; 
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { 
-            position: relative; 
-            display: inline-block; 
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
-            margin-top: 20px;
-        }
-
-        /* Стрелка строго сверху */
+        .container { position: relative; display: inline-block; margin-top: 20px; }
+        
         .pointer { 
-            position: absolute; 
-            top: -10px; 
-            left: 50%; 
+            position: absolute; top: -10px; left: 50%; 
             transform: translateX(-50%); 
-            width: 0; 
-            height: 0; 
+            width: 0; height: 0; 
             border-left: 20px solid transparent; 
             border-right: 20px solid transparent; 
             border-top: 35px solid #e74c3c; 
@@ -40,71 +27,39 @@
 
         #canvas { 
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
-            border-radius: 50%;
-            border: 8px solid #fff;
-            background-color: #fff;
-            transform: rotate(0deg); 
+            border-radius: 50%; border: 8px solid #fff; background-color: #fff;
         }
 
-        /* Группа управления: Поле и Кнопка в одну линию */
         .controls {
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
-            gap: 0; /* Убираем зазор для эффекта слитности, если нужно, или ставим 10px */
-            margin-top: 30px;
-            width: 100%;
-            max-width: 400px;
+            display: flex; justify-content: center; align-items: stretch;
+            margin-top: 30px; width: 100%; max-width: 450px;
         }
 
         input {
-            flex: 1;
-            padding: 0 20px;
-            height: 54px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-right: none; /* Соединяем с кнопкой */
-            border-radius: 12px 0 0 12px;
-            outline: none;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        input:focus {
-            border-color: #6e8efb;
+            flex: 1; padding: 0 15px; height: 50px;
+            font-size: 16px; border: 2px solid #ddd; border-right: none;
+            border-radius: 10px 0 0 10px; outline: none;
         }
 
         button { 
-            height: 54px;
-            padding: 0 25px; 
-            font-size: 16px; 
-            font-weight: bold;
-            cursor: pointer; 
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: #fff; 
-            border: none; 
-            border-radius: 0 12px 12px 0; 
-            transition: all 0.3s ease;
+            height: 50px; padding: 0 25px; 
+            font-size: 16px; font-weight: bold; cursor: pointer; 
+            background: #27ae60; color: #fff; 
+            border: none; border-radius: 0 10px 10px 0;
             white-space: nowrap;
-            box-sizing: border-box;
         }
 
-        button:hover { 
-            filter: brightness(1.1);
-        }
-
-        button:disabled { 
-            background: #ccc; 
-            cursor: not-allowed; 
-        }
+        button:disabled { background: #ccc; }
 
         #res {
             margin-top: 25px;
-            font-size: 20px;
-            min-height: 30px;
+            font-size: 22px;
             font-weight: 600;
             color: #2c3e50;
-            max-width: 320px;
+            width: 90%;
+            white-space: nowrap; /* В ОДНУ СТРОКУ */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -125,64 +80,44 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2"];
-
-        // Первоначальная отрисовка
-        function init() {
-            draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
-        }
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997"];
 
         function draw(labels) {
-            const centerX = 180;
-            const centerY = 180;
-            const radius = 175;
+            const centerX = 180, centerY = 180, radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-
             ctx.clearRect(0, 0, 360, 360);
-            
             labels.forEach((text, i) => {
                 const angle = i * arc - Math.PI / 2;
-                
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
-                
-                ctx.save();
-                ctx.strokeStyle = "rgba(255,255,255,0.3)";
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.restore();
-
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 12px sans-serif"; 
-                ctx.textAlign = "right";
-                const displayText = text.length > 12 ? text.substring(0, 10) + ".." : text;
-                ctx.fillText(displayText, radius - 20, 5);
+                ctx.font = "bold 12px sans-serif"; ctx.textAlign = "right";
+                ctx.fillText(text.substring(0, 14), radius - 20, 5);
                 ctx.restore();
             });
+        }
 
-            // Центр
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
+        // Загрузка призов ПРИ СТАРТЕ
+        async function init() {
+            try {
+                const r = await fetch('/get_prizes_list');
+                const d = await r.json();
+                if (d.names) draw(d.names);
+            } catch (e) {
+                draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
+            }
         }
 
         async function spin() {
-            const btn = document.getElementById('btn');
-            const resText = document.getElementById('res');
-            const codeInput = document.getElementById('promo-code');
-            const code = codeInput.value.trim();
-
-            if (!code) {
-                resText.innerText = "⚠️ Введите код!";
-                return;
-            }
+            const btn = document.getElementById('btn'), resText = document.getElementById('res');
+            const code = document.getElementById('promo-code').value.trim();
+            if (!code) { alert("Введите код!"); return; }
 
             btn.disabled = true;
             resText.innerText = "⏳ Проверка...";
@@ -193,7 +128,6 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code })
                 });
-
                 const d = await r.json();
 
                 if (!r.ok) {
@@ -202,29 +136,19 @@
                     return;
                 }
 
-                // Перерисовываем колесо подгруженными данными
                 draw(d.all_names);
-
-                resText.innerText = "🎰 Удача рядом...";
-                
                 const arcDegree = 360 / d.total_segments;
-                const extraSpins = 1800; // 5 полных кругов
-                const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
-                const targetAngle = 360 - segmentCenter;
-
-                // Вращение всегда вперед
-                currentRotation += extraSpins + ((targetAngle - (currentRotation % 360) + 360) % 360);
-
+                const targetAngle = 360 - (d.index * arcDegree + arcDegree / 2);
+                currentRotation += 1800 + ((targetAngle - (currentRotation % 360) + 360) % 360);
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerHTML = "✨ ВЫИГРЫШ: <br><span style='color: #e74a3b; font-size: 24px;'>" + d.prize + "</span> ✨";
+                    // ТУТ ВЫВОД В ОДНУ СТРОКУ
+                    resText.innerHTML = "✨ ВЫИГРЫШ: <span style='color: #e74a3b;'>" + d.prize + "</span> ✨";
                     btn.disabled = false;
                 }, 5200);
-
             } catch (e) {
-                console.error(e);
-                resText.innerText = "❗ Ошибка сервера";
+                resText.innerText = "❗ Ошибка соединения";
                 btn.disabled = false;
             }
         }
@@ -233,4 +157,3 @@
     </script>
 </body>
 </html>
-
