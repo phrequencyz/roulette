@@ -12,19 +12,22 @@
             margin: 0; 
             padding: 20px; 
             color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .container { 
             position: relative; 
             display: inline-block; 
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
             margin-top: 20px;
         }
 
         /* Стрелка строго сверху */
         .pointer { 
             position: absolute; 
-            top: -5px; 
+            top: -10px; 
             left: 50%; 
             transform: translateX(-50%); 
             width: 0; 
@@ -43,20 +46,28 @@
             transform: rotate(0deg); 
         }
 
-        /* Блок ввода кода */
-        .input-group {
-            margin-top: 25px;
+        /* Группа управления: Поле и Кнопка в одну линию */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 0; /* Убираем зазор для эффекта слитности, если нужно, или ставим 10px */
+            margin-top: 30px;
+            width: 100%;
+            max-width: 400px;
         }
 
         input {
-            padding: 12px 20px;
+            flex: 1;
+            padding: 0 20px;
+            height: 54px;
             font-size: 16px;
             border: 2px solid #ddd;
-            border-radius: 50px;
+            border-right: none; /* Соединяем с кнопкой */
+            border-radius: 12px 0 0 12px;
             outline: none;
             transition: border-color 0.3s;
-            width: 200px;
-            text-align: center;
+            box-sizing: border-box;
         }
 
         input:focus {
@@ -64,31 +75,36 @@
         }
 
         button { 
-            margin-top: 15px;
-            padding: 12px 35px; 
-            font-size: 18px; 
+            height: 54px;
+            padding: 0 25px; 
+            font-size: 16px; 
             font-weight: bold;
             cursor: pointer; 
             background: linear-gradient(135deg, #6e8efb, #a777e3);
             color: #fff; 
             border: none; 
-            border-radius: 50px; 
-            box-shadow: 0 4px 15px rgba(110, 142, 251, 0.4);
+            border-radius: 0 12px 12px 0; 
             transition: all 0.3s ease;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
+            white-space: nowrap;
+            box-sizing: border-box;
         }
 
-        button:hover { transform: translateY(-2px); }
-        button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+        button:hover { 
+            filter: brightness(1.1);
+        }
+
+        button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+        }
 
         #res {
-            margin-top: 20px;
-            font-size: 22px;
+            margin-top: 25px;
+            font-size: 20px;
             min-height: 30px;
             font-weight: 600;
             color: #2c3e50;
+            max-width: 320px;
         }
     </style>
 </head>
@@ -99,9 +115,9 @@
         <canvas id="canvas" width="360" height="360"></canvas>
     </div>
 
-    <div class="input-group">
-        <input type="text" id="promo-code" placeholder="Введите код">
-        <button id="btn" onclick="spin()">ИСПЫТАТЬ УДАЧУ</button>
+    <div class="controls">
+        <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
+        <button id="btn" onclick="spin()">КРУТИТЬ</button>
     </div>
 
     <div id="res"></div>
@@ -109,17 +125,11 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2", "#198754", "#0dcaf0"];
+        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2"];
 
-        // Первичная отрисовка колеса (загружаем названия один раз)
-        async function init() {
-            try {
-                // Мы можем сделать пустой запрос или просто получить список имен
-                // Для простоты, здесь можно либо захардкодить заглушки, 
-                // либо сервер при первом GET / может передавать список всех имен.
-                // Пока просто отрисуем пустое или дефолтное колесо.
-                draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
-            } catch (e) { console.error(e); }
+        // Первоначальная отрисовка
+        function init() {
+            draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
         }
 
         function draw(labels) {
@@ -140,7 +150,7 @@
                 ctx.fill();
                 
                 ctx.save();
-                ctx.strokeStyle = "rgba(255,255,255,0.4)";
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.restore();
@@ -156,6 +166,7 @@
                 ctx.restore();
             });
 
+            // Центр
             ctx.beginPath();
             ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
             ctx.fillStyle = "#fff";
@@ -169,12 +180,12 @@
             const code = codeInput.value.trim();
 
             if (!code) {
-                alert("Пожалуйста, введите код!");
+                resText.innerText = "⚠️ Введите код!";
                 return;
             }
 
             btn.disabled = true;
-            resText.innerText = "Проверка кода...";
+            resText.innerText = "⏳ Проверка...";
 
             try {
                 const r = await fetch('/spin', {
@@ -186,36 +197,34 @@
                 const d = await r.json();
 
                 if (!r.ok) {
-                    resText.innerText = d.error || "Ошибка";
+                    resText.innerText = "❌ " + (d.error || "Ошибка");
                     btn.disabled = false;
                     return;
                 }
 
-                // Перерисовываем колесо актуальными названиями из JSON перед вращением
+                // Перерисовываем колесо подгруженными данными
                 draw(d.all_names);
 
-                resText.innerText = "Колесо вращается...";
+                resText.innerText = "🎰 Удача рядом...";
                 
                 const arcDegree = 360 / d.total_segments;
                 const extraSpins = 1800; // 5 полных кругов
-                
-                // Расчет угла для попадания в нужный сегмент (360 - середина сегмента)
                 const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
                 const targetAngle = 360 - segmentCenter;
 
-                // Математически корректный доворот всегда вперед
+                // Вращение всегда вперед
                 currentRotation += extraSpins + ((targetAngle - (currentRotation % 360) + 360) % 360);
 
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerHTML = "✨ Вы выиграли: <br><span style='color: #e74c3c; font-size: 28px;'>" + d.prize + "</span> ✨";
+                    resText.innerHTML = "✨ ВЫИГРЫШ: <br><span style='color: #e74a3b; font-size: 24px;'>" + d.prize + "</span> ✨";
                     btn.disabled = false;
                 }, 5200);
 
             } catch (e) {
                 console.error(e);
-                resText.innerText = "Ошибка сервера";
+                resText.innerText = "❗ Ошибка сервера";
                 btn.disabled = false;
             }
         }
@@ -224,3 +233,4 @@
     </script>
 </body>
 </html>
+
