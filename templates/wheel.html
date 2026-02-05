@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>Lucky Wheel</title>
     <style>
-        /* Общий фон страницы делаем прозрачным */
         body { 
             text-align: center; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -20,7 +20,6 @@
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
         }
 
-        /* Указатель (стрелочка) */
         .pointer { 
             position: absolute; 
             top: -5px; 
@@ -42,7 +41,6 @@
             background-color: #fff;
         }
 
-        /* Кнопка */
         button { 
             margin-top: 25px;
             padding: 12px 35px; 
@@ -70,7 +68,7 @@
 
         #res {
             margin-top: 15px;
-            font-size: 22px;
+            font-size: 20px;
             min-height: 30px;
             font-weight: 600;
             color: #2c3e50;
@@ -89,13 +87,27 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        // Красивая палитра мягких цветов
-        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#858796", "#f8f9fc"];
+        
+        // Обновленная палитра из 12 цветов
+        const colors = [
+            "#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", 
+            "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#6610f2",
+            "#198754", "#0dcaf0"
+        ];
 
         async function init() {
-            const r = await fetch('/spin', {method:'POST'});
-            const d = await r.json();
-            draw(d.all_names);
+            try {
+                const r = await fetch('/spin', {method:'POST'});
+                const d = await r.json();
+                
+                if (d.error) {
+                    document.getElementById('res').innerHTML = "<span style='color: #e74c3c;'>⚠️ JSON недоступен, данные по умолчанию</span>";
+                }
+                
+                draw(d.all_names);
+            } catch (e) {
+                document.getElementById('res').innerText = "Ошибка соединения с сервером";
+            }
         }
 
         function draw(labels) {
@@ -108,29 +120,25 @@
             
             labels.forEach((text, i) => {
                 const angle = i * arc;
-                // Сектор
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
                 ctx.stroke();
-                ctx.strokeStyle = "rgba(255,255,255,0.2)";
 
-                // Текст
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc/2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 14px sans-serif";
+                ctx.font = "bold 12px sans-serif"; // Чуть меньше шрифт для 20 сегментов
                 ctx.textAlign = "right";
-                // Обрезаем текст если он слишком длинный
                 const displayText = text.length > 12 ? text.substring(0, 10) + ".." : text;
                 ctx.fillText(displayText, radius - 20, 5);
                 ctx.restore();
             });
 
-            // Центральный кружок для красоты
             ctx.beginPath();
             ctx.arc(centerX, centerY, 15, 0, Math.PI*2);
             ctx.fillStyle = "#fff";
@@ -143,21 +151,25 @@
             btn.disabled = true;
             resText.innerText = "Удача улыбается...";
 
-            const r = await fetch('/spin', {method:'POST'});
-            const d = await r.json();
-            
-            const arcDegree = 360 / d.total_segments;
-            // Рассчитываем финальный угол (минимум 5 полных оборотов + сектор)
-            const extraSpins = 1800; 
-            const targetAngle = extraSpins + (360 - (d.index * arcDegree) - (arcDegree/2));
-            
-            currentRotation += targetAngle;
-            document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
+            try {
+                const r = await fetch('/spin', {method:'POST'});
+                const d = await r.json();
+                
+                const arcDegree = 360 / d.total_segments;
+                const extraSpins = 1800; 
+                const targetAngle = extraSpins + (360 - (d.index * arcDegree) - (arcDegree/2));
+                
+                currentRotation += targetAngle;
+                document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
-            setTimeout(() => {
-                resText.innerText = "✨ " + d.prize + " ✨";
+                setTimeout(() => {
+                    resText.innerText = "✨ " + d.prize + " ✨";
+                    btn.disabled = false;
+                }, 5200);
+            } catch (e) {
+                resText.innerText = "Ошибка запроса";
                 btn.disabled = false;
-            }, 5200);
+            }
         }
         init();
     </script>
