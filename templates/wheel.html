@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titanium Roulette</title>
+    <title>Premium Roulette</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body { 
@@ -170,8 +170,14 @@
 
         async function spin() {
             const btn = document.getElementById('btn'), resText = document.getElementById('res');
-            const code = document.getElementById('promo-code').value.trim();
-            if (!code) { resText.innerText = "⚠️ Введите код!"; return; }
+            const codeInput = document.getElementById('promo-code');
+            const code = codeInput.value.trim();
+
+            if (!code) { 
+                resText.style.color = "#f87171";
+                resText.innerText = "⚠️ Введите код!"; 
+                return; 
+            }
 
             btn.disabled = true;
             resText.style.color = "#94a3b8";
@@ -191,10 +197,13 @@
                     btn.disabled = false;
                     return;
                 }
+                resText.style.color = "#6e8efb"; 
+                resText.innerText = "🍀 Удача рядом...";
 
                 draw(d.all_names);
                 const arcDegree = 360 / d.total_segments;
                 const targetAngle = 360 - (d.index * arcDegree + arcDegree / 2);
+                
                 currentRotation += 2160 + ((targetAngle - (currentRotation % 360) + 360) % 360);
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
@@ -205,6 +214,7 @@
                     btn.disabled = false;
                 }, 5200);
             } catch (e) {
+                resText.style.color = "#f87171";
                 resText.innerText = "❗ Ошибка сервера";
                 btn.disabled = false;
             }
