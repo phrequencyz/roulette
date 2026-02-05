@@ -9,7 +9,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 app = Flask(__name__)
 
 # --- НАСТРОЙКИ (Проверь их!) ---
-SHEET_NAME = "Название_Твоей_Таблицы"  # Должно в точности совпадать с Google Таблицей
+SHEET_NAME = "codes_roulette"  # Должно в точности совпадать с Google Таблицей
 JSON_URL = "https://raw.githubusercontent.com/phrequencyz/roulette/refs/heads/main/prizes.json"
 
 def get_gspread_client():
@@ -101,3 +101,4 @@ if __name__ == '__main__':
     # Настройки порта для Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
