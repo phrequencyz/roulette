@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Roulette</title>
+    <title>Titanium Roulette</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body { 
@@ -28,7 +28,7 @@
 
         .pointer { 
             position: absolute; 
-            top: -10px; 
+            top: -12px; 
             left: 50%; 
             transform: translateX(-50%); 
             width: 0; 
@@ -37,7 +37,7 @@
             border-right: 20px solid transparent; 
             border-top: 35px solid #ef4444; 
             z-index: 10;
-            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+            filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px rgba(239, 68, 68, 0.9));
         }
 
         #canvas { 
@@ -71,6 +71,7 @@
             color: #1e293b;
             font-weight: 600;
             box-sizing: border-box;
+            font-family: 'Trebuchet MS', sans-serif;
         }
 
         button { 
@@ -85,6 +86,7 @@
             transition: all 0.3s ease;
             white-space: nowrap;
             text-transform: uppercase;
+            font-family: 'Trebuchet MS', sans-serif;
         }
 
         button:hover:not(:disabled) { 
@@ -104,9 +106,10 @@
             color: #fbbf24;
             width: 90%;
             max-width: 450px;
-            white-space: nowrap; /* Гарантия одной строки */
+            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis; /* Если текст очень длинный, будет "..." вместо переноса */
+            text-overflow: ellipsis;
+            font-family: 'Trebuchet MS', sans-serif;
         }
     </style>
 </head>
@@ -197,7 +200,6 @@
 
                 setTimeout(() => {
                     resText.style.color = "#fbbf24";
-                    // ИСПРАВЛЕНО: Всё в одну строку без <br>
                     resText.innerHTML = "✨ ВЫИГРЫШ: " + d.prize + " ✨";
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
                     btn.disabled = false;
