@@ -3,84 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Рулетка</title>
+    <title>Premium Roulette</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body { 
             text-align: center; 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #f4f7f6; 
-            margin: 0; padding: 20px; 
-            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: radial-gradient(circle at center, #1e293b, #0f172a); /* Возвращаем красивый темный фон */
+            margin: 0; 
+            padding: 20px; /* Твой эталонный отступ */
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .container { position: relative; display: inline-block; margin-top: 20px; }
-        
+        .container { 
+            position: relative; 
+            display: inline-block; 
+            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.4));
+            margin-top: 20px; /* Твой эталонный отступ сверху */
+        }
+
+        /* Стрелка строго сверху */
         .pointer { 
-            position: absolute; top: -10px; left: 50%; 
+            position: absolute; 
+            top: -10px; 
+            left: 50%; 
             transform: translateX(-50%); 
-            width: 0; height: 0; 
+            width: 0; 
+            height: 0; 
             border-left: 20px solid transparent; 
             border-right: 20px solid transparent; 
-            border-top: 35px solid #e74c3c; 
+            border-top: 35px solid #ef4444; 
             z-index: 10;
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
         }
 
         #canvas { 
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
-            border-radius: 50%; 
-            border: 8px solid #fff; /* Вернул красивую обводку */
-            background-color: #fff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border: 8px solid #334155; /* Тёмная обводка в стиле темы */
+            background-color: #334155;
+            transform: rotate(0deg); 
+            display: block;
         }
 
+        /* Группа управления */
         .controls {
-            display: flex; 
-            justify-content: center; 
+            display: flex;
+            justify-content: center;
             align-items: stretch;
-            margin-top: 30px; 
-            width: 380px; /* Фиксированная ширина, чтобы не разъезжалось */
+            margin-top: 30px; /* Твой эталонный отступ */
+            width: 100%;
+            max-width: 360px; /* Компактно как ты просил */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         input {
-            width: 200px; /* Фиксированная ширина поля */
-            padding: 0 15px; 
-            height: 50px;
-            font-size: 16px; 
-            border: 2px solid #ddd; 
-            border-right: none;
-            border-radius: 10px 0 0 10px; 
+            flex: 1;
+            padding: 0 15px;
+            height: 54px;
+            font-size: 16px;
+            border: none;
             outline: none;
+            background: #fff;
+            color: #1e293b;
+            font-weight: 600;
             box-sizing: border-box;
         }
 
         button { 
-            width: 120px; /* Кнопка стала нормального размера */
-            height: 50px; 
-            font-size: 16px; 
-            font-weight: bold; 
+            height: 54px;
+            padding: 0 25px; 
+            font-size: 15px; 
+            font-weight: bold;
             cursor: pointer; 
-            background: #27ae60; 
+            background: linear-gradient(135deg, #6366f1, #a855f7);
             color: #fff; 
             border: none; 
-            border-radius: 0 10px 10px 0;
+            transition: all 0.3s ease;
             white-space: nowrap;
-            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        button:hover { background: #219150; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:hover:not(:disabled) { 
+            filter: brightness(1.2);
+        }
+
+        button:disabled { 
+            background: #475569; 
+            cursor: not-allowed; 
+        }
 
         #res {
             margin-top: 25px;
             font-size: 20px;
-            font-weight: 600;
-            color: #2c3e50;
-            width: 90%;
-            max-width: 500px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-height: 30px;
+            min-height: 40px;
+            font-weight: 700;
+            color: #fbbf24; /* Золотой цвет для приза */
+            max-width: 320px;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -92,7 +119,7 @@
     </div>
 
     <div class="controls">
-        <input type="text" id="promo-code" placeholder="КОД">
+        <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
         <button id="btn" onclick="spin()">КРУТИТЬ</button>
     </div>
 
@@ -101,16 +128,18 @@
     <script>
         let currentRotation = 0;
         const ctx = document.getElementById('canvas').getContext('2d');
-        // Увеличил количество цветов, так как у тебя 20 призов
-        const colors = ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b", "#6f42c1", "#fd7e14", "#20c997", "#d63384", "#111111"];
+        const colors = ["#6366f1", "#8b5cf6", "#d946ef", "#f43f5e", "#fb923c", "#facc15", "#4ade80", "#2dd4bf", "#38bdf8", "#818cf8"];
 
         function draw(labels) {
-            const centerX = 180, centerY = 180, radius = 175;
+            const centerX = 180;
+            const centerY = 180;
+            const radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-            ctx.clearRect(0, 0, 360, 360);
-            
+
+            ctx.clearRect(0, 0, 360, 360);                        
             labels.forEach((text, i) => {
                 const angle = i * arc - Math.PI / 2;
+                
                 ctx.beginPath();
                 ctx.fillStyle = colors[i % colors.length];
                 ctx.moveTo(centerX, centerY);
@@ -118,35 +147,61 @@
                 ctx.fill();
                 
                 ctx.save();
+                ctx.strokeStyle = "rgba(255,255,255,0.15)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 10px sans-serif"; // Чуть меньше шрифт, так как сегментов много
+                ctx.font = labels.length > 15 ? "bold 10px sans-serif" : "bold 12px sans-serif";
                 ctx.textAlign = "right";
-                ctx.fillText(text.substring(0, 12), radius - 15, 5);
+                const displayText = text.length > 14 ? text.substring(0, 12) + ".." : text;
+                ctx.fillText(displayText, radius - 20, 5);
                 ctx.restore();
             });
+
+            // Центр
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
+            ctx.fillStyle = "#1e293b";
+            ctx.fill();
+            ctx.strokeStyle = "#475569";
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
 
+        // Автозагрузка реальных призов при старте
         async function init() {
             try {
                 const r = await fetch('/get_prizes_list');
                 const d = await r.json();
-                if (d.names) draw(d.names);
+                if (d.names && d.names.length > 0) {
+                    draw(d.names);
+                } else {
+                    draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
+                }
             } catch (e) {
-                console.error("Ошибка загрузки:", e);
                 draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
             }
         }
 
         async function spin() {
-            const btn = document.getElementById('btn'), resText = document.getElementById('res');
+            const btn = document.getElementById('btn');
+            const resText = document.getElementById('res');
             const codeInput = document.getElementById('promo-code');
             const code = codeInput.value.trim();
 
-            if (!code) { alert("Введите код!"); return; }
+            if (!code) {
+                resText.style.color = "#f87171";
+                resText.innerText = "⚠️ Введите код!";
+                return;
+            }
 
             btn.disabled = true;
+            resText.style.color = "#94a3b8";
             resText.innerText = "⏳ Проверка...";
 
             try {
@@ -155,29 +210,43 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: code })
                 });
+
                 const d = await r.json();
 
                 if (!r.ok) {
+                    resText.style.color = "#f87171";
                     resText.innerText = "❌ " + (d.error || "Ошибка");
                     btn.disabled = false;
                     return;
                 }
 
                 draw(d.all_names);
-                resText.innerText = "🎰 Удача улыбается вам...";
-                
+                resText.innerText = "🎰 Удача рядом...";
+
                 const arcDegree = 360 / d.total_segments;
-                const targetAngle = 360 - (d.index * arcDegree + arcDegree / 2);
-                currentRotation += 1800 + ((targetAngle - (currentRotation % 360) + 360) % 360);
-                
+                const extraSpins = 2160; // 6 полных кругов
+                const segmentCenter = (d.index * arcDegree) + (arcDegree / 2);
+                const targetAngle = 360 - segmentCenter;
+
+                currentRotation += extraSpins + ((targetAngle - (currentRotation % 360) + 360) % 360);
                 document.getElementById('canvas').style.transform = `rotate(${currentRotation}deg)`;
 
                 setTimeout(() => {
-                    resText.innerHTML = "✨ ВЫИГРЫШ: <span style='color: #e74a3b;'>" + d.prize + "</span> ✨";
+                    resText.style.color = "#fbbf24";
+                    resText.innerHTML = "✨ ВЫИГРЫШ: <br>" + d.prize + " ✨";
+                    
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.7 }
+                    });
+
                     btn.disabled = false;
                 }, 5200);
+
             } catch (e) {
-                resText.innerText = "❗ Ошибка соединения";
+                resText.style.color = "#f87171";
+                resText.innerText = "❗ Ошибка сервера";
                 btn.disabled = false;
             }
         }
