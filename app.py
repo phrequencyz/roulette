@@ -5,14 +5,18 @@ from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
-JSON_URL = "https://raw.githubusercontent.com/phrequencyz/roulette/refs/heads/main/prizes.json"
+# ПРОВЕРЬ ЭТУ ССЫЛКУ! Она должна начинаться с raw.githubusercontent.com
+JSON_URL = "ТВОЯ_RAW_ССЫЛКА_ЗДЕСЬ"
 
 def get_prizes():
     try:
-        r = requests.get(JSON_URL)
+        r = requests.get(JSON_URL, timeout=5)
+        r.raise_for_status() # Проверит, что ссылка открылась успешно
         return r.json()
-    except:
-        return [{"name": "Ошибка конфига", "chance": 100}]
+    except Exception as e:
+        print(f"Ошибка загрузки JSON: {e}")
+        # Если не загрузилось, отдаем стандартный набор, чтобы код не падал
+        return [{"name": "Ошибка ссылки", "chance": 100}]
 
 @app.route('/')
 def index():
@@ -24,6 +28,7 @@ def spin():
     names = [p['name'] for p in prizes]
     weights = [p['chance'] for p in prizes]
     
+    # Выбираем приз
     selected_prize = random.choices(names, weights=weights, k=1)[0]
     
     return jsonify({
@@ -32,6 +37,3 @@ def spin():
         "total_segments": len(names),
         "all_names": names
     })
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
