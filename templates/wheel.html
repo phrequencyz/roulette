@@ -48,16 +48,24 @@
             display: block;
         }
 
+        /* Обёртка для полей ввода */
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 360px;
+        }
+
         .controls {
             display: flex;
             justify-content: center;
             align-items: stretch;
-            margin-top: 30px; 
-            width: 100%;
-            max-width: 360px; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             border-radius: 12px;
             overflow: hidden;
+            width: 100%;
         }
 
         input {
@@ -72,6 +80,13 @@
             font-weight: 600;
             box-sizing: border-box;
             font-family: 'Trebuchet MS', sans-serif;
+        }
+
+        /* Стиль для поля никнейма (отдельное скругление) */
+        #nickname {
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 100%;
         }
 
         button { 
@@ -120,9 +135,13 @@
         <canvas id="canvas" width="360" height="360"></canvas>
     </div>
 
-    <div class="controls">
-        <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
-        <button id="btn" onclick="spin()">КРУТИТЬ</button>
+    <div class="controls-wrapper">
+        <input type="text" id="nickname" placeholder="ВАШ НИКНЕЙМ">
+        
+        <div class="controls">
+            <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
+            <button id="btn" onclick="spin()">КРУТИТЬ</button>
+        </div>
     </div>
 
     <div id="res"></div>
@@ -171,8 +190,17 @@
         async function spin() {
             const btn = document.getElementById('btn'), resText = document.getElementById('res');
             const codeInput = document.getElementById('promo-code');
+            const nickInput = document.getElementById('nickname');
+            
             const code = codeInput.value.trim();
+            const nick = nickInput.value.trim();
 
+            // Проверка ника и кода
+            if (!nick) {
+                resText.style.color = "#f87171";
+                resText.innerText = "⚠️ Введите никнейм!";
+                return;
+            }
             if (!code) { 
                 resText.style.color = "#f87171";
                 resText.innerText = "⚠️ Введите код!"; 
@@ -187,7 +215,11 @@
                 const r = await fetch('/spin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code })
+                    // ОТПРАВЛЯЕМ КОД И НИК
+                    body: JSON.stringify({ 
+                        code: code,
+                        nickname: nick 
+                    })
                 });
                 const d = await r.json();
 
@@ -223,4 +255,3 @@
     </script>
 </body>
 </html>
-
