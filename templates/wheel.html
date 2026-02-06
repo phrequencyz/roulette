@@ -136,10 +136,10 @@
     </div>
 
     <div class="controls-wrapper">
-        <input type="text" id="nickname" placeholder="ВВЕДИТЕ ВАШ НИКНЕЙМ">
+        <input type="text" id="nickname" placeholder="ВАШ НИКНЕЙМ">
         
         <div class="controls">
-            <input type="text" id="promo-code" placeholder="ВВЕДИТЕ КОД">
+            <input type="text" id="promo-code" placeholder="ВАШ КЛЮЧ">
             <button id="btn" onclick="spin()">КРУТИТЬ</button>
         </div>
     </div>
@@ -195,7 +195,6 @@
             const code = codeInput.value.trim();
             const nick = nickInput.value.trim();
 
-            // Проверка ника и кода
             if (!nick) {
                 resText.style.color = "#f87171";
                 resText.innerText = "⚠️ Введите никнейм!";
@@ -203,7 +202,7 @@
             }
             if (!code) { 
                 resText.style.color = "#f87171";
-                resText.innerText = "⚠️ Введите код!"; 
+                resText.innerText = "⚠️ Введите ключ!"; 
                 return; 
             }
 
@@ -215,7 +214,7 @@
                 const r = await fetch('/spin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // ОТПРАВЛЯЕМ КОД И НИК
+
                     body: JSON.stringify({ 
                         code: code,
                         nickname: nick 
@@ -255,4 +254,5 @@
     </script>
 </body>
 </html>
+
 
