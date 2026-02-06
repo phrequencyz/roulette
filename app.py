@@ -43,8 +43,12 @@ def spin():
     try:
         data = request.get_json()
         user_code = data.get('code', '').strip().upper()
+        nickname = data.get('nickname', '').strip() # ПОЛУЧАЕМ НИКНЕЙМ
+
         if not user_code:
             return jsonify({"error": "Введите код"}), 400
+        if not nickname:
+            return jsonify({"error": "Введите никнейм"}), 400
 
         client = get_gspread_client()
         sheet = client.open(SHEET_NAME).sheet1
@@ -55,17 +59,25 @@ def spin():
             return jsonify({"error": "Код не найден"}), 404
 
         row = cell.row
+        # Получаем статус из колонки 2 (B)
         status = sheet.cell(row, 2).value
         
         if status and status.upper() == "TRUE":
             return jsonify({"error": "Код уже использован"}), 403
 
-        sheet.update_cell(row, 2, "TRUE")
-
+        # Сначала выбираем приз, чтобы записать его в таблицу
         prizes, _ = get_prizes()
         names = [p['name'] for p in prizes]
         weights = [p['chance'] for p in prizes]
         selected_prize = random.choices(names, weights=weights, k=1)[0]
+
+        # ОБНОВЛЯЕМ ТАБЛИЦУ:
+        # Колонка 2: TRUE (статус)
+        # Колонка 3: Никнейм
+        # Колонка 4: Название приза
+        sheet.update_cell(row, 2, "TRUE")
+        sheet.update_cell(row, 3, nickname)
+        sheet.update_cell(row, 4, selected_prize)
 
         return jsonify({
             "prize": selected_prize,
@@ -74,6 +86,7 @@ def spin():
             "all_names": names
         })
     except Exception as e:
+        print(f"Ошибка: {e}") # Полезно для логов в консоли
         return jsonify({"error": "Ошибка сервера"}), 500
 
 if __name__ == '__main__':
