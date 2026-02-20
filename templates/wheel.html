@@ -48,7 +48,6 @@
             display: block;
         }
 
-        /* Обёртка для полей ввода */
         .controls-wrapper {
             display: flex;
             flex-direction: column;
@@ -82,7 +81,6 @@
             font-family: 'Trebuchet MS', sans-serif;
         }
 
-        /* Стиль для поля никнейма (отдельное скругление) */
         #nickname {
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -137,7 +135,6 @@
 
     <div class="controls-wrapper">
         <input type="text" id="nickname" placeholder="ВАШ НИКНЕЙМ">
-        
         <div class="controls">
             <input type="text" id="promo-code" placeholder="ВАШ КЛЮЧ">
             <button id="btn" onclick="spin()">КРУТИТЬ</button>
@@ -154,7 +151,7 @@
         function draw(labels) {
             const centerX = 180, centerY = 180, radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-            ctx.clearRect(0, 0, 360, 360);                        
+            ctx.clearRect(0, 0, 360, 360);
             labels.forEach((text, i) => {
                 const angle = i * arc - Math.PI / 2;
                 ctx.beginPath();
@@ -181,7 +178,7 @@
             try {
                 const r = await fetch('/get_prizes_list');
                 const d = await r.json();
-                if (d.names) draw(d.names);
+                if (d.names && d.names.length) draw(d.names);
             } catch (e) {
                 draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
             }
@@ -214,11 +211,7 @@
                 const r = await fetch('/spin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-
-                    body: JSON.stringify({ 
-                        code: code,
-                        nickname: nick 
-                    })
+                    body: JSON.stringify({ code: code, nickname: nick })
                 });
                 const d = await r.json();
 
@@ -228,6 +221,7 @@
                     btn.disabled = false;
                     return;
                 }
+
                 resText.style.color = "#6e8efb"; 
                 resText.innerText = "🍀 Удача рядом...";
 
@@ -244,15 +238,15 @@
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
                     btn.disabled = false;
                 }, 5200);
+
             } catch (e) {
                 resText.style.color = "#f87171";
                 resText.innerText = "❗ Ошибка сервера";
                 btn.disabled = false;
             }
         }
+
         init();
     </script>
 </body>
 </html>
-
-
