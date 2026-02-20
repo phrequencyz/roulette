@@ -1,174 +1,104 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Titanium Roulette</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        body { 
-            text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: radial-gradient(circle at center, #1e293b, #0f172a); 
-            margin: 0; 
-            padding: 20px; 
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container { 
-            position: relative; 
-            display: inline-block; 
-            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.4));
-            margin-top: 20px; 
-        }
-        .pointer { 
-            position: absolute; 
-            top: -12px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 0; 
-            height: 0; 
-            border-left: 20px solid transparent; 
-            border-right: 20px solid transparent; 
-            border-top: 35px solid #ef4444; 
-            z-index: 10;
-            filter: drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px rgba(239, 68, 68, 0.9));
-        }
-        #canvas { 
-            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1); 
-            border-radius: 50%;
-            border: 8px solid #334155;
-            background-color: #334155;
-            display: block;
-        }
-        .controls-wrapper { display: flex; flex-direction: column; gap: 12px; margin-top: 30px; width: 100%; max-width: 360px; }
-        .controls { display: flex; justify-content: center; align-items: stretch; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; width: 100%; }
-        input { flex: 1; padding: 0 15px; height: 54px; font-size: 16px; border: none; outline: none; background: #fff; color: #1e293b; font-weight: 600; box-sizing: border-box; font-family: 'Trebuchet MS', sans-serif; }
-        #nickname { border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 100%; }
-        button { height: 54px; padding: 0 25px; font-size: 15px; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; border: none; transition: all 0.3s ease; white-space: nowrap; text-transform: uppercase; font-family: 'Trebuchet MS', sans-serif; }
-        button:hover:not(:disabled) { filter: brightness(1.2); }
-        button:disabled { background: #475569; cursor: not-allowed; }
-        #res { margin-top: 25px; font-size: 20px; min-height: 40px; font-weight: 700; color: #fbbf24; width: 90%; max-width: 450px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Trebuchet MS', sans-serif; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Titanium Roulette</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+/* Твой оригинальный CSS оставляем без изменений */
+body { text-align:center;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:radial-gradient(circle at center,#1e293b,#0f172a);margin:0;padding:20px;color:#fff;display:flex;flex-direction:column;align-items:center;min-height:100vh;}
+.container{position:relative;display:inline-block;filter:drop-shadow(0 15px 35px rgba(0,0,0,0.4));margin-top:20px;}
+.pointer{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:35px solid #ef4444;z-index:10;filter:drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 15px rgba(239,68,68,0.9));}
+#canvas{transition:transform 5s cubic-bezier(0.15,0,0.15,1);border-radius:50%;border:8px solid #334155;background-color:#334155;display:block;}
+.controls-wrapper{display:flex;flex-direction:column;gap:12px;margin-top:30px;width:100%;max-width:360px;}
+.controls{display:flex;justify-content:center;align-items:stretch;box-shadow:0 10px 25px rgba(0,0,0,0.3);border-radius:12px;overflow:hidden;width:100%;}
+input{flex:1;padding:0 15px;height:54px;font-size:16px;border:none;outline:none;background:#fff;color:#1e293b;font-weight:600;box-sizing:border-box;font-family:'Trebuchet MS',sans-serif;}
+#nickname{border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);width:100%;}
+button{height:54px;padding:0 25px;font-size:15px;font-weight:bold;cursor:pointer;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;border:none;transition:all 0.3s ease;white-space:nowrap;text-transform:uppercase;font-family:'Trebuchet MS',sans-serif;}
+button:hover:not(:disabled){filter:brightness(1.2);}
+button:disabled{background:#475569;cursor:not-allowed;}
+#res{margin-top:25px;font-size:20px;min-height:40px;font-weight:700;color:#fbbf24;width:90%;max-width:450px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Trebuchet MS',sans-serif;}
+</style>
 </head>
 <body>
-
 <div class="container">
-    <div class="pointer"></div>
-    <canvas id="canvas" width="360" height="360"></canvas>
+<div class="pointer"></div>
+<canvas id="canvas" width="360" height="360"></canvas>
 </div>
-
 <div class="controls-wrapper">
-    <input type="text" id="nickname" placeholder="ВАШ НИКНЕЙМ">
-    <div class="controls">
-        <input type="text" id="promo-code" placeholder="ВАШ КЛЮЧ">
-        <button id="btn" onclick="spin()">КРУТИТЬ</button>
-    </div>
+<input type="text" id="nickname" placeholder="ВАШ НИКНЕЙМ">
+<div class="controls">
+<input type="text" id="promo-code" placeholder="ВАШ КЛЮЧ">
+<button id="btn" onclick="spin()">КРУТИТЬ</button>
 </div>
-
+</div>
 <div id="res"></div>
 
 <script>
 let currentRotation = 0;
 const ctx = document.getElementById('canvas').getContext('2d');
-const colors = ["#6366f1","#8b5cf6","#d946ef","#f43f5e","#fb923c","#facc15","#4ade80","#2dd4bf","#38bdf8","#818cf8"];
+const colors=["#6366f1","#8b5cf6","#d946ef","#f43f5e","#fb923c","#facc15","#4ade80","#2dd4bf","#38bdf8","#818cf8"];
 
-function draw(labels) {
-    const centerX = 180, centerY = 180, radius = 175;
-    const arc = (Math.PI * 2) / labels.length; // равная ширина
+function draw(labels){
+    const centerX=180,centerY=180,radius=175;
+    const arc=(Math.PI*2)/labels.length;
     ctx.clearRect(0,0,360,360);
-
-    labels.forEach((text, i)=>{
-        const angle = i*arc - Math.PI/2;
+    labels.forEach((text,i)=>{
+        const angle=i*arc-Math.PI/2;
         ctx.beginPath();
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, angle, angle+arc);
+        ctx.fillStyle=colors[i%colors.length];
+        ctx.moveTo(centerX,centerY);
+        ctx.arc(centerX,centerY,radius,angle,angle+arc);
         ctx.fill();
-
         ctx.save();
-        ctx.translate(centerX, centerY);
-        ctx.rotate(angle + arc/2);
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 12px sans-serif";
-        ctx.textAlign = "right";
-        ctx.fillText(text.substring(0,14), radius-20, 5);
+        ctx.translate(centerX,centerY);
+        ctx.rotate(angle+arc/2);
+        ctx.fillStyle="#fff";
+        ctx.font="bold 12px sans-serif";
+        ctx.textAlign="right";
+        ctx.fillText(String(text).substring(0,14),radius-20,5);
         ctx.restore();
     });
-
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 15, 0, Math.PI*2);
-    ctx.fillStyle = "#1e293b";
+    ctx.arc(centerX,centerY,15,0,Math.PI*2);
+    ctx.fillStyle="#1e293b";
     ctx.fill();
 }
 
-async function init() {
-    try {
-        const r = await fetch('/get_prizes_list');
-        const d = await r.json();
-        if(d.names) draw(d.names);
-    } catch(e) {
-        draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
-    }
-}
-
-async function spin() {
-    const btn = document.getElementById('btn'), resText = document.getElementById('res');
-    const codeInput = document.getElementById('promo-code');
-    const nickInput = document.getElementById('nickname');
-    const code = codeInput.value.trim();
-    const nick = nickInput.value.trim();
-
-    if(!nick){ resText.style.color="#f87171"; resText.innerText="⚠️ Введите никнейм!"; return; }
-    if(!code){ resText.style.color="#f87171"; resText.innerText="⚠️ Введите ключ!"; return; }
-
-    btn.disabled = true;
-    resText.style.color="#94a3b8"; resText.innerText="⏳ Проверка...";
-
+async function init(){
     try{
-        const r = await fetch('/spin',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({code, nickname: nick})
-        });
-        const d = await r.json();
-
-        if(!r.ok){
-            resText.style.color="#f87171";
-            resText.innerText="❌ " + (d.error || "Ошибка");
-            btn.disabled=false;
-            return;
-        }
-
-        resText.style.color="#6e8efb";
-        resText.innerText="🍀 Удача рядом...";
-
-        draw(d.all_names);
-        const arcDegree = 360/d.total_segments;
-        const targetAngle = 360-(d.index*arcDegree + arcDegree/2);
-
-        currentRotation += 2160 + ((targetAngle - (currentRotation % 360) + 360) % 360);
-        document.getElementById('canvas').style.transform=`rotate(${currentRotation}deg)`;
-
-        setTimeout(()=>{
-            resText.style.color="#fbbf24";
-            resText.innerHTML="✨ ВЫИГРЫШ: "+d.prize+" ✨";
-            confetti({particleCount:150,spread:70,origin:{y:0.7}});
-            btn.disabled=false;
-        },5200);
-
+        const r=await fetch('/get_prizes_list');
+        const d=await r.json();
+        if(d.names) draw(d.names);
     }catch(e){
-        resText.style.color="#f87171";
-        resText.innerText="❗ Ошибка сервера";
-        btn.disabled=false;
+        draw(["?","?","?","?","?","?","?","?"]);
     }
 }
 
+async function spin(){
+    const btn=document.getElementById('btn'),resText=document.getElementById('res');
+    const codeInput=document.getElementById('promo-code');
+    const nickInput=document.getElementById('nickname');
+    const code=codeInput.value.trim();
+    const nick=nickInput.value.trim();
+    if(!nick){resText.style.color="#f87171";resText.innerText="⚠️ Введите никнейм!";return;}
+    if(!code){resText.style.color="#f87171";resText.innerText="⚠️ Введите ключ!";return;}
+    btn.disabled=true;resText.style.color="#94a3b8";resText.innerText="⏳ Проверка...";
+    try{
+        const r=await fetch('/spin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,nickname:nick})});
+        const d=await r.json();
+        if(!r.ok){resText.style.color="#f87171";resText.innerText="❌ "+(d.error||"Ошибка");btn.disabled=false;return;}
+        resText.style.color="#6e8efb";resText.innerText="🍀 Удача рядом...";
+        draw(d.all_names);
+        const arcDegree=360/d.total_segments;
+        const targetAngle=360-(d.index*arcDegree+arcDegree/2);
+        currentRotation+=2160+((targetAngle-(currentRotation%360)+360)%360);
+        document.getElementById('canvas').style.transform=`rotate(${currentRotation}deg)`;
+        setTimeout(()=>{resText.style.color="#fbbf24";resText.innerHTML="✨ ВЫИГРЫШ: "+d.prize+" ✨";confetti({particleCount:150,spread:70,origin:{y:0.7}});btn.disabled=false;},5200);
+    }catch(e){resText.style.color="#f87171";resText.innerText="❗ Ошибка сервера";btn.disabled=false;}
+}
 init();
 </script>
-
 </body>
 </html>
