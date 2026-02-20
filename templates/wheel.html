@@ -151,7 +151,7 @@
         function draw(labels) {
             const centerX = 180, centerY = 180, radius = 175;
             const arc = (Math.PI * 2) / labels.length;
-            ctx.clearRect(0, 0, 360, 360);
+            ctx.clearRect(0, 0, 360, 360);                        
             labels.forEach((text, i) => {
                 const angle = i * arc - Math.PI / 2;
                 ctx.beginPath();
@@ -159,11 +159,12 @@
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, angle, angle + arc);
                 ctx.fill();
+
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(angle + arc / 2);
                 ctx.fillStyle = "#fff";
-                ctx.font = labels.length > 15 ? "bold 10px sans-serif" : "bold 12px sans-serif";
+                ctx.font = "bold 12px sans-serif";  // ← Твой шрифт без изменений
                 ctx.textAlign = "right";
                 ctx.fillText(text.substring(0, 14), radius - 20, 5);
                 ctx.restore();
@@ -178,7 +179,7 @@
             try {
                 const r = await fetch('/get_prizes_list');
                 const d = await r.json();
-                if (d.names && d.names.length) draw(d.names);
+                if (d.names) draw(d.names);
             } catch (e) {
                 draw(["?", "?", "?", "?", "?", "?", "?", "?"]);
             }
@@ -211,7 +212,10 @@
                 const r = await fetch('/spin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: code, nickname: nick })
+                    body: JSON.stringify({ 
+                        code: code,
+                        nickname: nick 
+                    })
                 });
                 const d = await r.json();
 
@@ -238,7 +242,6 @@
                     confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
                     btn.disabled = false;
                 }, 5200);
-
             } catch (e) {
                 resText.style.color = "#f87171";
                 resText.innerText = "❗ Ошибка сервера";
