@@ -7,12 +7,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
 
-SHEET_NAME = "codes_roulette"  # Имя вашей Google Таблицы
+SHEET_NAME = "codes_roulette"
 
 def get_gspread_client():
     creds_json = os.environ.get("GOOGLE_CREDS")
     if not creds_json:
-        raise ValueError("GOOGLE_CREDS не установлены")
+        raise ValueError("GOOGLE_CREDS not set")
     creds_dict = json.loads(creds_json)
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -27,14 +27,15 @@ def index():
 
 @app.route('/get_prizes_list')
 def get_prizes_list():
-    """Возвращаем все призы для отрисовки колеса"""
+    """Возвращаем все призы для равного колеса (в порядке листа)"""
     try:
         client = get_gspread_client()
         stock_sheet = client.open(SHEET_NAME).worksheet("prizes_stock")
         rows = stock_sheet.get_all_records()
-        names = [row.get("name", "?") for row in rows if row.get("name")]
+        # ВСЕ имена для фронта (колесо рисуется равномерно)
+        names = [row["name"] for row in rows if row.get("name")]
         if not names:
-            names = ["Нет призов"]  # чтобы колесо всё равно отрисовалось
+            names = ["Нет призов"]
         return jsonify({"names": names})
     except Exception as e:
         print(f"Ошибка получения списка призов: {e}")
@@ -54,14 +55,10 @@ def spin():
 
         client = get_gspread_client()
         spreadsheet = client.open(SHEET_NAME)
-
-        # Лист с кодами (первый лист)
         codes_sheet = spreadsheet.sheet1
-
-        # Лист с призами
         stock_sheet = spreadsheet.worksheet("prizes_stock")
 
-        # Проверка кода
+        # Проверяем код
         try:
             cell = codes_sheet.find(user_code)
         except gspread.exceptions.CellNotFound:
@@ -72,38 +69,37 @@ def spin():
         if status and status.upper() == "TRUE":
             return jsonify({"error": "Код уже использован"}), 403
 
-        # Получаем все призы из prizes_stock
+        # Получаем все призы
         rows = stock_sheet.get_all_records()
         available_prizes = []
         weights = []
-        for row_data in rows:
-            try:
-                stock = int(row_data.get("stock", 0))
-                chance = int(row_data.get("chance", 1))
-            except:
-                continue
+        for r in rows:
+            name = r["name"]
+            chance = int(r["chance"])
+            stock = int(r["stock"])
             if stock > 0:
-                available_prizes.append(row_data["name"])
+                available_prizes.append(name)
                 weights.append(chance)
 
         if not available_prizes:
             return jsonify({"error": "Все призы закончились"}), 400
 
-        # Выбираем приз
+        # Выбираем приз по шансам
         selected_prize = random.choices(available_prizes, weights=weights, k=1)[0]
 
-        # Уменьшаем stock выбранного приза
-        prize_row = stock_sheet.find(selected_prize).row
+        # Уменьшаем stock
+        prize_cell = stock_sheet.find(selected_prize)
+        prize_row = prize_cell.row
         current_stock = int(stock_sheet.cell(prize_row, 3).value)
-        stock_sheet.update_cell(prize_row, 3, max(0, current_stock - 1))
+        stock_sheet.update_cell(prize_row, 3, current_stock - 1)
 
-        # Обновляем код как использованный
+        # Отмечаем код использованным
         codes_sheet.update_cell(row, 2, "TRUE")
         codes_sheet.update_cell(row, 3, nickname)
         codes_sheet.update_cell(row, 4, selected_prize)
 
-        # Для фронта (все сегменты колеса)
-        all_names = [row["name"] for row in rows]
+        # Для фронта: все сегменты (в порядке листа)
+        all_names = [r["name"] for r in rows if r.get("name")]
 
         return jsonify({
             "prize": selected_prize,
