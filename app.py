@@ -14,7 +14,6 @@ def get_gspread_client():
     creds_json = os.environ.get("GOOGLE_CREDS")
     if not creds_json:
         raise ValueError("GOOGLE_CREDS not set")
-
     creds_dict = json.loads(creds_json)
     scope = [
         "https://spreadsheets.google.com/feeds",
@@ -31,14 +30,12 @@ def index():
 
 @app.route('/get_prizes_list')
 def get_prizes_list():
+    """Возвращаем все призы для отрисовки колеса (даже если stock = 0)"""
     try:
         client = get_gspread_client()
         stock_sheet = client.open(SHEET_NAME).worksheet("prizes_stock")
-
         rows = stock_sheet.get_all_records()
-
-        names = [row["name"] for row in rows if int(row["stock"]) > 0]
-
+        names = [row["name"] for row in rows]  # ВСЕ призы для фронта
         return jsonify({"names": names})
     except Exception as e:
         print(f"Ошибка получения списка призов: {e}")
@@ -54,7 +51,6 @@ def spin():
 
         if not user_code:
             return jsonify({"error": "Введите код"}), 400
-
         if not nickname:
             return jsonify({"error": "Введите никнейм"}), 400
 
@@ -75,21 +71,19 @@ def spin():
 
         row = cell.row
         status = codes_sheet.cell(row, 2).value
-
         if status and status.upper() == "TRUE":
             return jsonify({"error": "Код уже использован"}), 403
 
-        # Получаем призы из prizes_stock
+        # Получаем все призы из prizes_stock
         rows = stock_sheet.get_all_records()
 
+        # Выбираем только доступные призы (stock > 0)
         available_prizes = []
         weights = []
-
         for row_data in rows:
             name = row_data["name"]
             chance = int(row_data["chance"])
             stock = int(row_data["stock"])
-
             if stock > 0:
                 available_prizes.append(name)
                 weights.append(chance)
@@ -98,16 +92,11 @@ def spin():
             return jsonify({"error": "Все призы закончились"}), 400
 
         # Выбираем приз
-        selected_prize = random.choices(
-            available_prizes,
-            weights=weights,
-            k=1
-        )[0]
+        selected_prize = random.choices(available_prizes, weights=weights, k=1)[0]
 
-        # Уменьшаем остаток приза
+        # Уменьшаем stock выбранного приза
         prize_cell = stock_sheet.find(selected_prize)
         prize_row = prize_cell.row
-
         current_stock = int(stock_sheet.cell(prize_row, 3).value)
         stock_sheet.update_cell(prize_row, 3, current_stock - 1)
 
@@ -116,7 +105,7 @@ def spin():
         codes_sheet.update_cell(row, 3, nickname)
         codes_sheet.update_cell(row, 4, selected_prize)
 
-        # Для фронта
+        # Для фронта (все сегменты колеса)
         all_names = [row["name"] for row in rows]
 
         return jsonify({
