@@ -35,11 +35,14 @@ def get_prizes_list():
         client = get_gspread_client()
         stock_sheet = client.open(SHEET_NAME).worksheet("prizes_stock")
         rows = stock_sheet.get_all_records()
-        names = [row["name"] for row in rows]  # ВСЕ призы для фронта
+        if not rows:
+            names = ["Ошибка"]
+        else:
+            names = [row.get("name", "?") for row in rows]
         return jsonify({"names": names})
     except Exception as e:
         print(f"Ошибка получения списка призов: {e}")
-        return jsonify({"names": []})
+        return jsonify({"names": ["Ошибка"]})
 
 
 @app.route('/spin', methods=['POST'])
@@ -81,12 +84,15 @@ def spin():
         available_prizes = []
         weights = []
         for row_data in rows:
-            name = row_data["name"]
-            chance = int(row_data["chance"])
-            stock = int(row_data["stock"])
-            if stock > 0:
-                available_prizes.append(name)
-                weights.append(chance)
+            try:
+                name = row_data["name"]
+                chance = int(row_data.get("chance", 1))
+                stock = int(row_data.get("stock", 0))
+                if stock > 0:
+                    available_prizes.append(name)
+                    weights.append(chance)
+            except Exception:
+                continue  # пропускаем некорректные строки
 
         if not available_prizes:
             return jsonify({"error": "Все призы закончились"}), 400
@@ -94,11 +100,15 @@ def spin():
         # Выбираем приз
         selected_prize = random.choices(available_prizes, weights=weights, k=1)[0]
 
-        # Уменьшаем stock выбранного приза
-        prize_cell = stock_sheet.find(selected_prize)
-        prize_row = prize_cell.row
-        current_stock = int(stock_sheet.cell(prize_row, 3).value)
-        stock_sheet.update_cell(prize_row, 3, current_stock - 1)
+        # Уменьшаем stock выбранного приза безопасно
+        try:
+            prize_cell = stock_sheet.find(selected_prize)
+            prize_row = prize_cell.row
+            current_stock = stock_sheet.cell(prize_row, 3).value
+            current_stock = int(current_stock) if current_stock else 1
+            stock_sheet.update_cell(prize_row, 3, max(0, current_stock - 1))
+        except Exception as e:
+            print(f"Ошибка обновления stock: {e}")
 
         # Обновляем код как использованный
         codes_sheet.update_cell(row, 2, "TRUE")
@@ -106,11 +116,11 @@ def spin():
         codes_sheet.update_cell(row, 4, selected_prize)
 
         # Для фронта (все сегменты колеса)
-        all_names = [row["name"] for row in rows]
+        all_names = [row.get("name", "?") for row in rows] or ["Ошибка"]
 
         return jsonify({
             "prize": selected_prize,
-            "index": all_names.index(selected_prize),
+            "index": all_names.index(selected_prize) if selected_prize in all_names else 0,
             "total_segments": len(all_names),
             "all_names": all_names
         })
