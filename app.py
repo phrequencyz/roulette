@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 SHEET_NAME = "codes_roulette"
 
-
 def get_gspread_client():
     creds_json = os.environ.get("GOOGLE_CREDS")
     if not creds_json:
@@ -22,25 +21,22 @@ def get_gspread_client():
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     return gspread.authorize(creds)
 
-
 @app.route('/')
 def index():
     return render_template('wheel.html')
 
-
 @app.route('/get_prizes_list')
 def get_prizes_list():
-    """Возвращаем все призы для отрисовки колеса"""
+    """Возвращаем все призы для фронта колеса (даже если stock = 0)"""
     try:
         client = get_gspread_client()
         stock_sheet = client.open(SHEET_NAME).worksheet("prizes_stock")
         rows = stock_sheet.get_all_records()
-        names = [row["name"] for row in rows]  # ВСЕ призы для фронта
+        names = [row["name"] for row in rows]  # просто порядок из таблицы
         return jsonify({"names": names})
     except Exception as e:
         print(f"Ошибка получения списка призов: {e}")
         return jsonify({"names": []})
-
 
 @app.route('/spin', methods=['POST'])
 def spin():
@@ -57,10 +53,7 @@ def spin():
         client = get_gspread_client()
         spreadsheet = client.open(SHEET_NAME)
 
-        # Лист с кодами
         codes_sheet = spreadsheet.sheet1
-
-        # Лист с призами
         stock_sheet = spreadsheet.worksheet("prizes_stock")
 
         # Проверяем код
@@ -74,10 +67,10 @@ def spin():
         if status and status.upper() == "TRUE":
             return jsonify({"error": "Код уже использован"}), 403
 
-        # Получаем все призы из prizes_stock
+        # Получаем все призы
         rows = stock_sheet.get_all_records()
 
-        # Выбираем только доступные призы (stock > 0)
+        # Доступные призы по stock > 0
         available_prizes = []
         weights = []
         for row_data in rows:
@@ -91,7 +84,7 @@ def spin():
         if not available_prizes:
             return jsonify({"error": "Все призы закончились"}), 400
 
-        # Выбираем приз
+        # Выбираем приз с учетом шансов
         selected_prize = random.choices(available_prizes, weights=weights, k=1)[0]
 
         # Уменьшаем stock выбранного приза
@@ -100,17 +93,17 @@ def spin():
         current_stock = int(stock_sheet.cell(prize_row, 3).value)
         stock_sheet.update_cell(prize_row, 3, current_stock - 1)
 
-        # Обновляем код как использованный
+        # Обновляем код
         codes_sheet.update_cell(row, 2, "TRUE")
         codes_sheet.update_cell(row, 3, nickname)
         codes_sheet.update_cell(row, 4, selected_prize)
 
-        # Для фронта (все сегменты колеса) — используем только доступные призы
-        all_names = available_prizes
+        # Для фронта (всегда равномерные сегменты)
+        all_names = [row["name"] for row in rows]
 
         return jsonify({
             "prize": selected_prize,
-            "index": all_names.index(selected_prize),
+            "index": all_names.index(selected_prize),  # позиция для колеса
             "total_segments": len(all_names),
             "all_names": all_names
         })
@@ -118,7 +111,6 @@ def spin():
     except Exception as e:
         print(f"Ошибка сервера: {e}")
         return jsonify({"error": "Ошибка сервера"}), 500
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
